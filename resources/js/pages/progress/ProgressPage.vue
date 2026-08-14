@@ -24,20 +24,34 @@
             </section>
 
             <UiCard title="Evolução de peso">
-                <div v-if="summary.weight_evolution?.length" class="space-y-2">
-                    <div
-                        v-for="item in summary.weight_evolution"
-                        :key="item.measured_at"
-                        class="flex items-center justify-between rounded-lg bg-slate-950/60 px-3 py-2 text-sm"
-                    >
-                        <span>{{ formatDate(item.measured_at) }}</span>
-                        <span class="text-slate-300">{{ formatWeight(item.weight) }}</span>
-                    </div>
-                </div>
+                <LineChart
+                    v-if="weightChart.labels.length"
+                    :labels="weightChart.labels"
+                    :datasets="weightChart.datasets"
+                    y-suffix=" kg"
+                />
                 <p v-else class="text-sm text-slate-400">Sem medições registradas.</p>
             </UiCard>
 
-            <UiCard title="Evolução por exercício">
+            <UiCard title="Carga por exercício">
+                <div v-if="summary.exercise_evolution?.length" class="space-y-4">
+                    <UiSelect
+                        v-model="selectedExerciseId"
+                        label="Exercício"
+                        :options="exerciseOptions"
+                    />
+                    <LineChart
+                        v-if="exerciseChart.labels.length"
+                        :labels="exerciseChart.labels"
+                        :datasets="exerciseChart.datasets"
+                        y-suffix=" kg"
+                    />
+                    <p v-else class="text-sm text-slate-400">Sem registros de carga para este exercício.</p>
+                </div>
+                <p v-else class="text-sm text-slate-400">Sem dados de exercícios.</p>
+            </UiCard>
+
+            <UiCard title="Resumo por exercício">
                 <div v-if="summary.exercise_evolution?.length" class="space-y-4">
                     <div
                         v-for="group in summary.exercise_evolution"
@@ -48,16 +62,6 @@
                         <p class="mt-1 text-xs text-slate-400">
                             Máx: {{ group.max_load ?? 0 }} kg · Volume: {{ formatNumber(group.total_volume ?? 0) }}
                         </p>
-                        <div v-if="group.entries?.length" class="mt-3 space-y-1">
-                            <div
-                                v-for="entry in group.entries.slice(0, 5)"
-                                :key="`${entry.logged_at}-${entry.load}`"
-                                class="flex justify-between text-xs text-slate-400"
-                            >
-                                <span>{{ formatDate(entry.logged_at) }}</span>
-                                <span>{{ entry.load ?? 0 }} kg · {{ entry.repetitions ?? '—' }} reps</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <p v-else class="text-sm text-slate-400">Sem dados de exercícios.</p>
@@ -74,35 +78,87 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import api, { extractData, extractError } from '../../api/client';
+import LineChart from '../../components/charts/LineChart.vue';
 import UiAlert from '../../components/ui/UiAlert.vue';
 import UiButton from '../../components/ui/UiButton.vue';
 import UiCard from '../../components/ui/UiCard.vue';
+import UiSelect from '../../components/ui/UiSelect.vue';
 import UiStat from '../../components/ui/UiStat.vue';
 import AppLayout from '../../layouts/AppLayout.vue';
+import { chartColors, lineDataset } from '../../utils/chartTheme';
 import { formatDate, formatNumber, formatWeight } from '../../utils/format';
 
 const summary = ref(null);
 const loading = ref(true);
 const error = ref('');
 const period = ref('month');
+const selectedExerciseId = ref('');
 
 const periodOptions = [
     { value: 'week', label: 'Semana' },
     { value: 'month', label: 'Mês' },
-    { value: 'quarter', label: 'Trimestre' },
+    { value: '3months', label: 'Trimestre' },
     { value: 'year', label: 'Ano' },
     { value: 'all', label: 'Tudo' },
 ];
+
+const weightChart = computed(() => {
+    const points = [...(summary.value?.weight_evolution ?? [])]
+        .filter((item) => item.weight != null)
+        .sort((a, b) => String(a.measured_at).localeCompare(String(b.measured_at)));
+
+    return {
+        labels: points.map((item) => formatDate(item.measured_at)),
+        datasets: [lineDataset('Peso', points.map((item) => item.weight))],
+    };
+});
+
+const exerciseOptions = computed(() =>
+    (summary.value?.exercise_evolution ?? []).map((group) => ({
+        value: String(group.exercise_id),
+        label: group.exercise_name ?? 'Exercício',
+    })),
+);
+
+const selectedExercise = computed(() =>
+    (summary.value?.exercise_evolution ?? []).find(
+        (group) => String(group.exercise_id) === selectedExerciseId.value,
+    ) ?? null,
+);
+
+const exerciseChart = computed(() => {
+    const entries = [...(selectedExercise.value?.entries ?? [])]
+        .filter((entry) => entry.load != null)
+        .sort((a, b) => String(a.logged_at).localeCompare(String(b.logged_at)));
+
+    return {
+        labels: entries.map((entry) => formatDate(entry.logged_at)),
+        datasets: [lineDataset('Carga', entries.map((entry) => entry.load), chartColors.sky)],
+    };
+});
+
+watch(exerciseOptions, (options) => {
+    if (! options.length) {
+        selectedExerciseId.value = '';
+        return;
+    }
+
+    if (! options.some((option) => option.value === selectedExerciseId.value)) {
+        selectedExerciseId.value = options[0].value;
+    }
+});
 
 async function loadSummary() {
     loading.value = true;
     error.value = '';
 
     try {
-        const response = await api.get('/progress', { params: { period: period.value } });
+        const response = await api.get('/progress', {
+            params: { period: period.value === 'all' ? undefined : period.value },
+        });
         summary.value = extractData(response);
     } catch (err) {
         error.value = extractError(err).message;

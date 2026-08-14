@@ -39,18 +39,29 @@
                 <p v-else class="text-sm text-slate-400">Nenhuma medição registrada.</p>
             </UiCard>
         </div>
+
+        <UiCard v-if="! loading && items.length" title="Evolução" class="mt-6">
+            <LineChart
+                v-if="measurementChart.labels.length"
+                :labels="measurementChart.labels"
+                :datasets="measurementChart.datasets"
+                :height="280"
+            />
+        </UiCard>
     </AppLayout>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import api, { extractData, extractError } from '../../api/client';
+import LineChart from '../../components/charts/LineChart.vue';
 import UiAlert from '../../components/ui/UiAlert.vue';
 import UiBadge from '../../components/ui/UiBadge.vue';
 import UiButton from '../../components/ui/UiButton.vue';
 import UiCard from '../../components/ui/UiCard.vue';
 import UiInput from '../../components/ui/UiInput.vue';
 import AppLayout from '../../layouts/AppLayout.vue';
+import { chartColors, lineDataset } from '../../utils/chartTheme';
 import { formatDate, formatWeight } from '../../utils/format';
 
 const items = ref([]);
@@ -66,6 +77,38 @@ const form = reactive({
     body_fat_percentage: '',
     waist: '',
     notes: '',
+});
+
+const measurementChart = computed(() => {
+    const points = [...items.value]
+        .filter((item) => item.weight != null || item.bmi != null)
+        .sort((a, b) => String(a.measured_at).localeCompare(String(b.measured_at)));
+
+    const datasets = [];
+
+    if (points.some((item) => item.weight != null)) {
+        datasets.push(
+            lineDataset(
+                'Peso (kg)',
+                points.map((item) => item.weight ?? null),
+            ),
+        );
+    }
+
+    if (points.some((item) => item.bmi != null)) {
+        datasets.push(
+            lineDataset(
+                'IMC',
+                points.map((item) => item.bmi ?? null),
+                chartColors.sky,
+            ),
+        );
+    }
+
+    return {
+        labels: points.map((item) => formatDate(item.measured_at)),
+        datasets,
+    };
 });
 
 async function loadItems() {
