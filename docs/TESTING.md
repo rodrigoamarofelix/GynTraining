@@ -67,9 +67,12 @@ tests/
 - Respostas API validadas com `assertJsonPath('success', true)` quando relevante
 - Soft delete validado com `assertSoftDeleted()` — nunca `forceDelete` em entidades de negócio
 
-## CI (futuro)
+## CI (GitHub Actions)
 
-```bash
-docker compose exec app php artisan test --parallel
-docker compose exec app ./vendor/bin/pint --test
-```
+A cada push ou PR na branch `main`, o workflow `.github/workflows/ci.yml` executa:
+
+1. `composer install`
+2. `php artisan test` (SQLite in-memory)
+3. `npm ci` + `npm run build`
+
+Acompanhe em **Actions** no repositório GitHub.
