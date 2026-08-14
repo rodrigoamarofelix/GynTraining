@@ -158,6 +158,15 @@
                         </div>
                     </div>
 
+                    <div v-if="weightChart.labels.length">
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Evolução de peso</p>
+                        <LineChart
+                            :labels="weightChart.labels"
+                            :datasets="weightChart.datasets"
+                            y-suffix=" kg"
+                        />
+                    </div>
+
                     <div v-if="latestMeasurement" class="rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-sm">
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Última medição</p>
                         <p class="mt-1 text-white">
@@ -192,14 +201,16 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import api, { extractData, extractError } from '../../api/client';
+import LineChart from '../../components/charts/LineChart.vue';
 import UiAlert from '../../components/ui/UiAlert.vue';
 import UiBadge from '../../components/ui/UiBadge.vue';
 import UiButton from '../../components/ui/UiButton.vue';
 import UiCard from '../../components/ui/UiCard.vue';
 import AppLayout from '../../layouts/AppLayout.vue';
+import { lineDataset } from '../../utils/chartTheme';
 import { formatDate, formatDateTime, formatNumber, formatWeight, profileStatusLabel } from '../../utils/format';
 
 const route = useRoute();
@@ -218,6 +229,17 @@ const restoringId = ref(null);
 const error = ref('');
 const success = ref('');
 const scopeFilter = ref('active');
+
+const weightChart = computed(() => {
+    const points = [...(progress.value?.weight_evolution ?? [])]
+        .filter((item) => item.weight != null)
+        .sort((a, b) => String(a.measured_at).localeCompare(String(b.measured_at)));
+
+    return {
+        labels: points.map((item) => formatDate(item.measured_at)),
+        datasets: [lineDataset('Peso', points.map((item) => item.weight))],
+    };
+});
 
 async function loadPlans() {
     loadingPlans.value = true;
