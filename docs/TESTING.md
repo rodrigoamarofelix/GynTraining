@@ -72,7 +72,7 @@ tests/
 A cada push ou PR na branch `main`, o workflow `.github/workflows/ci.yml` executa:
 
 1. `composer install`
-2. `php artisan test` (SQLite in-memory)
-3. `npm ci` + `npm run build`
+2. `npm ci` + `npm run build` (necessário para testes da SPA)
+3. `php artisan test` (SQLite in-memory)
 
 Acompanhe em **Actions** no repositório GitHub.
