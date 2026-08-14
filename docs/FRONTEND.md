@@ -96,6 +96,20 @@ make fresh
 - Cards, badges e botões grandes para uso em academia
 - Cronômetro de descanso com alerta sonoro e vibração (quando suportado)
 
+## PWA (instalável)
+
+Após `npm run build`, o app pode ser instalado na tela inicial (Chrome/Edge desktop ou mobile).
+
+**Como testar no PC (sem Wi‑Fi):**
+
+1. `make frontend-build` ou `npm run build`
+2. Abra http://localhost:8080
+3. Chrome → F12 → **Application** → **Manifest** e **Service Workers**
+4. Opcional: Lighthouse → audit **PWA**
+5. Ícone de instalar na barra de endereço do Chrome
+
+Arquivos principais: `vite.config.js` (plugin PWA), `public/icons/`, `public/build/manifest.webmanifest`, `public/build/sw.js`.
+
 ## Fase 12 — Professor e Admin
 
 ### Professor (`trainer@gyntraining.local`)
