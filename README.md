@@ -94,4 +94,5 @@ Se não existir nenhum usuário: `make seed` ou `make fresh`.
 - [ ] App mobile (Flutter/React Native)
 - [ ] Graficos de evolucao e relatorios
 - [x] CI (GitHub Actions)
+- [x] PWA basico (instalavel)
 - [ ] Deploy producao
