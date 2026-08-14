@@ -14,6 +14,9 @@
     <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
     <title>GynTraining</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if (file_exists(public_path('build/registerSW.js')))
+        <script src="{{ asset('build/registerSW.js') }}" defer></script>
+    @endif
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased">
     <div id="app"></div>

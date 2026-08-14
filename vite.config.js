@@ -27,7 +27,9 @@ export default defineConfig({
         tailwindcss(),
         VitePWA({
             registerType: 'autoUpdate',
-            injectRegister: 'auto',
+            injectRegister: 'script-defer',
+            buildBase: '/build/',
+            scope: '/',
             includeAssets: ['icons/icon.svg', 'icons/pwa-192x192.png', 'icons/pwa-512x512.png', 'icons/apple-touch-icon.png'],
             manifest: {
                 name: 'GynTraining',
