@@ -1,5 +1,7 @@
 # GynTraining
 
+[![CI](https://github.com/rodrigoamarofelix/GynTraining/actions/workflows/ci.yml/badge.svg)](https://github.com/rodrigoamarofelix/GynTraining/actions/workflows/ci.yml)
+
 Sistema web e mobile de gerenciamento e acompanhamento de treinos de academia.
 
 ## Stack
@@ -91,4 +93,5 @@ Se não existir nenhum usuário: `make seed` ou `make fresh`.
 
 - [ ] App mobile (Flutter/React Native)
 - [ ] Graficos de evolucao e relatorios
-- [ ] CI/CD e deploy producao
+- [x] CI (GitHub Actions)
+- [ ] Deploy producao
