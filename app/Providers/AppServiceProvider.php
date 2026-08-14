@@ -21,9 +21,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if ($this->app->environment('testing')) {
-            Gate::define('viewApiDocs', fn (): bool => true);
-        }
+        Gate::define(
+            'viewApiDocs',
+            fn (?object $user = null): bool => app()->environment(['local', 'testing']),
+        );
 
         Scramble::configure()
             ->withDocumentTransformers(function (OpenApi $openApi): void {
